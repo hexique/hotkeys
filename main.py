@@ -1,9 +1,21 @@
 import keyboard
+import json
 from random import randint
 from time import sleep, time
 
 def write(text):
     keyboard.write(str(text))
+
+try:
+    with open("config.json", mode="r", encoding="UTF-8") as file:
+        config = json.load(file)
+except FileNotFoundError:
+    with open("config.json", mode="w", encoding="UTF-8") as file:
+        config = {
+            "hotkey": "alt+shift",
+            "custom-hotkeys": {}
+        }
+        json.dump(config, file, indent=4)
 
 WRITE_HOTKEYS = {
     "1": "¹",
@@ -28,6 +40,15 @@ WRITE_HOTKEYS = {
     "r": lambda: str(randint(1_000_000_000, 9_999_999_999)),
 }
 
+for key in config["custom-hotkeys"]:
+    WRITE_HOTKEYS[key] = config["custom-hotkeys"][key]
+
+
+try:
+    hotkey = config["hotkey"]
+except KeyError:
+    hotkey = "alt+shift"
+
 def create_handler(key):
     def handler():
         value = WRITE_HOTKEYS[key]
@@ -45,12 +66,12 @@ def create_handler(key):
 
 for key in WRITE_HOTKEYS:
     try:
-        keyboard.add_hotkey(f'shift+alt+{key}', create_handler(key), suppress=True)
+        keyboard.add_hotkey(f'{hotkey}+{key}', create_handler(key), suppress=True)
     except Exception as e:
         print(f"✗ {key}: {e}")
 
 for key, value in list(WRITE_HOTKEYS.items()):
-    print(f"ALT + SHIFT + {key} = {value}")
+    print(f"{hotkey}+{key} = {value}")
 
 try:
     keyboard.wait()
